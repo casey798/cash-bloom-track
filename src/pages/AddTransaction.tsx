@@ -16,9 +16,9 @@ import { toast } from 'sonner';
 
 export default function AddTransaction() {
   const navigate = useNavigate();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, importTransactions } = useTransactions();
   const { settings } = useSettings();
-  
+
   const [type, setType] = useState<TransactionType>('expense');
   const [amount, setAmount] = useState('');
   const [category, setCategory] = useState<CategoryId | null>(null);
@@ -45,10 +45,69 @@ export default function AddTransaction() {
     navigate('/');
   };
 
+  /* 
+    Simple CSV parser expecting columns: Date, Description, Amount, Category
+  */
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      toast.info('CSV import coming soon!');
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        try {
+          const text = event.target?.result as string;
+          const rows = text.split('\n');
+          // Skip header row if present (simple check)
+          const startIdx = rows[0].toLowerCase().includes('date') ? 1 : 0;
+
+          const newTransactions = [];
+
+          for (let i = startIdx; i < rows.length; i++) {
+            const row = rows[i].trim();
+            if (!row) continue;
+
+            // Handle simple CSV splitting (considering basic commas)
+            const cols = row.split(',').map(c => c.trim().replace(/^"|"$/g, ''));
+
+            if (cols.length >= 3) {
+              // Adjust indices based on your expected CSV format
+              // Defaulting to: Date [0], Description [1], Amount [2], Category [3] (optional)
+              const dateStr = cols[0];
+              const desc = cols[1];
+              const amountStr = cols[2];
+              const catStr = cols[3]?.toLowerCase();
+
+              const amount = parseFloat(amountStr);
+              if (!isNaN(amount) && dateStr) {
+                // Try to map category string to CategoryId
+                let category: CategoryId = 'other';
+                if (catStr) {
+                  const matched = categories.find(c => c.id === catStr || c.name.toLowerCase() === catStr);
+                  if (matched) category = matched.id;
+                }
+
+                newTransactions.push({
+                  type: amount < 0 ? 'expense' : 'income', // Assume negative is expense if mixed, otherwise default to current type selector
+                  amount: Math.abs(amount),
+                  category: category,
+                  description: desc || 'Imported Transaction',
+                  date: new Date(dateStr).toISOString(),
+                });
+              }
+            }
+          }
+
+          if (newTransactions.length > 0) {
+            importTransactions(newTransactions);
+            toast.success(`Successfully imported ${newTransactions.length} transactions`);
+          } else {
+            toast.error('No valid transactions found in CSV');
+          }
+        } catch (err) {
+          console.error(err);
+          toast.error('Failed to parse CSV file');
+        }
+      };
+      reader.readAsText(file);
     }
   };
 
@@ -67,8 +126,8 @@ export default function AddTransaction() {
         <button
           className={cn(
             'flex-1 py-3 rounded-lg font-medium transition-all',
-            type === 'expense' 
-              ? 'bg-primary text-primary-foreground shadow-sm' 
+            type === 'expense'
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground'
           )}
           onClick={() => { setType('expense'); setCategory(null); }}
@@ -78,8 +137,8 @@ export default function AddTransaction() {
         <button
           className={cn(
             'flex-1 py-3 rounded-lg font-medium transition-all',
-            type === 'income' 
-              ? 'bg-primary text-primary-foreground shadow-sm' 
+            type === 'income'
+              ? 'bg-primary text-primary-foreground shadow-sm'
               : 'text-muted-foreground'
           )}
           onClick={() => { setType('income'); setCategory(null); }}
@@ -114,8 +173,8 @@ export default function AddTransaction() {
               key={cat.id}
               className={cn(
                 'flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all',
-                category === cat.id 
-                  ? 'border-primary bg-primary/10' 
+                category === cat.id
+                  ? 'border-primary bg-primary/10'
                   : 'border-transparent bg-muted/50'
               )}
               onClick={() => setCategory(cat.id)}
@@ -166,10 +225,10 @@ export default function AddTransaction() {
           <label className="flex items-center justify-center gap-2 cursor-pointer text-muted-foreground hover:text-foreground transition-colors">
             <Upload className="w-5 h-5" />
             <span>Import from GPay CSV</span>
-            <input 
-              type="file" 
-              accept=".csv" 
-              className="hidden" 
+            <input
+              type="file"
+              accept=".csv"
+              className="hidden"
               onChange={handleFileUpload}
             />
           </label>
@@ -177,7 +236,7 @@ export default function AddTransaction() {
       </Card>
 
       {/* Submit Button */}
-      <Button 
+      <Button
         className="w-full h-12 text-base font-semibold"
         onClick={handleSubmit}
       >

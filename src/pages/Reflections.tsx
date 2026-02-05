@@ -29,7 +29,7 @@ export default function Reflections() {
   const { stats } = useTransactions();
   const { goals, addGoal, deleteGoal } = useBudgetGoals();
   const { formatCurrency } = useSettings();
-  
+
   const [showAddGoal, setShowAddGoal] = useState(false);
   const [newGoalCategory, setNewGoalCategory] = useState<CategoryId | ''>('');
   const [newGoalLimit, setNewGoalLimit] = useState('');
@@ -43,13 +43,13 @@ export default function Reflections() {
       toast.error('Please fill in all fields');
       return;
     }
-    
+
     addGoal({
       category: newGoalCategory as CategoryId,
       limit: parseFloat(newGoalLimit),
       period: newGoalPeriod,
     });
-    
+
     toast.success('Goal added!');
     setShowAddGoal(false);
     setNewGoalCategory('');
@@ -90,9 +90,9 @@ export default function Reflections() {
             </div>
           </div>
           <p className="text-sm opacity-80 mt-2">
-            {weeklyChange <= 0 
-              ? `₹${Math.abs(stats.weeklyExpense - stats.lastWeekExpense).toLocaleString()} less than last week` 
-              : `₹${Math.abs(stats.weeklyExpense - stats.lastWeekExpense).toLocaleString()} more than last week`}
+            {weeklyChange <= 0
+              ? `${formatCurrency(Math.abs(stats.weeklyExpense - stats.lastWeekExpense))} less than last week`
+              : `${formatCurrency(Math.abs(stats.weeklyExpense - stats.lastWeekExpense))} more than last week`}
           </p>
         </CardContent>
       </Card>
@@ -149,12 +149,12 @@ export default function Reflections() {
             const spent = getSpentAmount(goal.category, goal.period);
             const progress = Math.min((spent / goal.limit) * 100, 100);
             const isOverBudget = spent > goal.limit;
-            
+
             return (
               <Card key={goal.id}>
                 <CardContent className="p-4">
                   <div className="flex items-center gap-3 mb-3">
-                    <div 
+                    <div
                       className="w-10 h-10 rounded-xl flex items-center justify-center text-lg"
                       style={{ backgroundColor: `${category.color}20` }}
                     >
@@ -164,8 +164,8 @@ export default function Reflections() {
                       <p className="font-medium">{category.name}</p>
                       <p className="text-sm text-muted-foreground capitalize">{goal.period}</p>
                     </div>
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       size="sm"
                       className="text-muted-foreground"
                       onClick={() => deleteGoal(goal.id)}
@@ -173,7 +173,7 @@ export default function Reflections() {
                       Remove
                     </Button>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
                       <span className={isOverBudget ? 'text-expense' : ''}>
@@ -183,8 +183,8 @@ export default function Reflections() {
                         of {formatCurrency(goal.limit)}
                       </span>
                     </div>
-                    <Progress 
-                      value={progress} 
+                    <Progress
+                      value={progress}
                       className={cn(
                         'h-2',
                         isOverBudget && '[&>div]:bg-expense'
@@ -219,7 +219,7 @@ export default function Reflections() {
           <DialogHeader>
             <DialogTitle>Add Budget Goal</DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Category</label>
@@ -236,9 +236,9 @@ export default function Reflections() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
-              <label className="text-sm text-muted-foreground mb-2 block">Budget Limit (₹)</label>
+              <label className="text-sm text-muted-foreground mb-2 block">Budget Limit ({settings.currency})</label>
               <Input
                 type="number"
                 value={newGoalLimit}
@@ -246,7 +246,7 @@ export default function Reflections() {
                 placeholder="Enter amount"
               />
             </div>
-            
+
             <div>
               <label className="text-sm text-muted-foreground mb-2 block">Period</label>
               <Select value={newGoalPeriod} onValueChange={(v) => setNewGoalPeriod(v as 'weekly' | 'monthly')}>
@@ -260,7 +260,7 @@ export default function Reflections() {
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowAddGoal(false)}>Cancel</Button>
             <Button onClick={handleAddGoal}>Add Goal</Button>

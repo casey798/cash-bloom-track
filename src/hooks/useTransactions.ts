@@ -19,7 +19,7 @@ export function useTransactions() {
   };
 
   const updateTransaction = (id: string, updates: Partial<Omit<Transaction, 'id' | 'createdAt'>>) => {
-    setTransactions(prev => 
+    setTransactions(prev =>
       prev.map(t => t.id === id ? { ...t, ...updates } : t)
     );
   };
@@ -89,10 +89,14 @@ export function useTransactions() {
       balance: totalIncome - totalExpense,
       weeklyExpense,
       lastWeekExpense,
-      weeklyChange: lastWeekExpense > 0 ? ((weeklyExpense - lastWeekExpense) / lastWeekExpense) * 100 : 0,
+      weeklyChange: lastWeekExpense > 0
+        ? ((weeklyExpense - lastWeekExpense) / lastWeekExpense) * 100
+        : (weeklyExpense > 0 ? 100 : 0),
       monthlyExpense,
       lastMonthExpense,
-      monthlyChange: lastMonthExpense > 0 ? ((monthlyExpense - lastMonthExpense) / lastMonthExpense) * 100 : 0,
+      monthlyChange: lastMonthExpense > 0
+        ? ((monthlyExpense - lastMonthExpense) / lastMonthExpense) * 100
+        : (monthlyExpense > 0 ? 100 : 0),
       monthlyIncome,
       categoryBreakdown,
     };
